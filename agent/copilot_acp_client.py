@@ -449,8 +449,10 @@ class CopilotACPClient:
             )
         except FileNotFoundError as exc:
             raise RuntimeError(
-                f"Could not start Copilot ACP command '{self._acp_command}'. "
-                "Install GitHub Copilot CLI or set HERMES_COPILOT_ACP_COMMAND/COPILOT_CLI_PATH."
+                f"Could not start ACP command '{self._acp_command}'. "
+                "Install the backing CLI (GitHub Copilot CLI or Cursor CLI) or set the "
+                "appropriate command env var (HERMES_COPILOT_ACP_COMMAND/COPILOT_CLI_PATH "
+                "or HERMES_CURSOR_ACP_COMMAND/CURSOR_CLI_PATH)."
             ) from exc
 
         if proc.stdin is None or proc.stdout is None:

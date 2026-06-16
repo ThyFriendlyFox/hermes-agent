@@ -1797,6 +1797,79 @@ def _model_flow_copilot_acp(config, current_model=""):
 
     print(f"Default model set to: {selected} (via {pconfig.name})")
 
+def _model_flow_cursor_acp(config, current_model=""):
+    """Cursor ACP flow using the local Cursor CLI (`cursor-agent acp`)."""
+    from hermes_cli.auth import (
+        PROVIDER_REGISTRY,
+        _prompt_model_selection,
+        _save_model_choice,
+        deactivate_provider,
+        get_external_process_provider_status,
+        resolve_external_process_provider_credentials,
+    )
+    from hermes_cli.config import load_config, save_config
+
+    del config
+
+    provider_id = "cursor-acp"
+    pconfig = PROVIDER_REGISTRY[provider_id]
+
+    status = get_external_process_provider_status(provider_id)
+    resolved_command = (
+        status.get("resolved_command") or status.get("command") or "cursor-agent"
+    )
+    effective_base = status.get("base_url") or pconfig.inference_base_url
+
+    print("  Cursor ACP delegates Hermes turns to `cursor-agent acp`.")
+    print("  Hermes starts its own ACP subprocess for each request.")
+    print("  Authenticate the Cursor CLI first with: cursor-agent login")
+    print("  (or set CURSOR_API_KEY). Hermes passes your model as a session hint.")
+    print(f"  Command: {resolved_command}")
+    print(f"  Backend marker: {effective_base}")
+    print()
+
+    try:
+        creds = resolve_external_process_provider_credentials(provider_id)
+    except Exception as exc:
+        print(f"  ⚠ {exc}")
+        print(
+            "  Set HERMES_CURSOR_ACP_COMMAND or CURSOR_CLI_PATH if the Cursor CLI is installed elsewhere."
+        )
+        return
+
+    effective_base = creds.get("base_url") or effective_base
+
+    # Cursor selects the underlying model from its own subscription; Hermes
+    # sends the chosen name only as a hint. Offer a few common choices plus
+    # a free-form entry.
+    model_list = ["auto", "composer-1", "gpt-5.4", "claude-opus-4.8", "claude-sonnet-4.5"]
+    selected = _prompt_model_selection(
+        model_list,
+        current_model=current_model or "auto",
+        confirm_provider=provider_id,
+        confirm_base_url=effective_base,
+        confirm_api_key=provider_id,
+    )
+
+    if not selected:
+        print("No change.")
+        return
+
+    _save_model_choice(selected)
+
+    cfg = load_config()
+    model = cfg.get("model")
+    if not isinstance(model, dict):
+        model = {"default": model} if model else {}
+        cfg["model"] = model
+    model["provider"] = provider_id
+    model["base_url"] = effective_base
+    model["api_mode"] = "chat_completions"
+    save_config(cfg)
+    deactivate_provider()
+
+    print(f"Default model set to: {selected} (via {pconfig.name})")
+
 def _model_flow_kimi(config, current_model=""):
     """Kimi / Moonshot model selection with automatic endpoint routing.
 
