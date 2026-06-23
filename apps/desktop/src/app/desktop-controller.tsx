@@ -56,11 +56,12 @@ import {
   $gatewayState,
   $messages,
   $messagingSessions,
-  $resumeFailedSessionId,
   $resumeExhaustedSessionId,
+  $resumeFailedSessionId,
   $selectedStoredSessionId,
   $sessions,
   $workingSessionIds,
+  applyWorkspaceForActiveProfile,
   CRON_SECTION_LIMIT,
   getRecentlySettledSessionIds,
   mergeSessionPage,
@@ -726,7 +727,8 @@ export function DesktopController() {
     // already shows the previous profile's model.
     void refreshCurrentModel(true)
     void refreshActiveProfile()
-  }, [activeGatewayProfile, refreshCurrentModel])
+    void applyWorkspaceForActiveProfile(requestGateway)
+  }, [activeGatewayProfile, refreshCurrentModel, requestGateway])
 
   const composer = useComposerActions({
     activeSessionId,

@@ -36,7 +36,8 @@ import {
   setConnection,
   setCurrentBranch,
   setCurrentCwd,
-  setSessionsLoading
+  setSessionsLoading,
+  setWorkspaceProfileContext
 } from '@/store/session'
 import type { RpcEvent } from '@/types/hermes'
 
@@ -345,10 +346,12 @@ export function useGatewayBoot({
         try {
           const pref = await desktop.profile?.get?.()
           const profileKey = (pref?.profile ?? '').trim() || 'default'
+          setWorkspaceProfileContext(profileKey)
           $activeGatewayProfile.set(profileKey)
           setPrimaryGateway(gateway, profileKey)
           void ensureGatewayForProfile(profileKey)
         } catch {
+          setWorkspaceProfileContext('default')
           $activeGatewayProfile.set('default')
         }
 
